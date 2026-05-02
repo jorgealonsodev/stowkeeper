@@ -1,0 +1,90 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>Stowkeeper Documentation</title>
+  <style>
+    body {
+      font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, Helvetica, Arial, sans-serif;
+      line-height: 1.6;
+      max-width: 800px;
+      margin: 0 auto;
+      padding: 2rem;
+      color: #24292f;
+      background: #ffffff;
+    }
+    h1 {
+      border-bottom: 1px solid #d0d7de;
+      padding-bottom: 0.3em;
+    }
+    h2 {
+      margin-top: 1.5em;
+      border-bottom: 1px solid #d0d7de;
+      padding-bottom: 0.3em;
+    }
+    ul {
+      padding-left: 1.5em;
+    }
+    li {
+      margin-bottom: 0.5em;
+    }
+    a {
+      color: #0969da;
+      text-decoration: none;
+    }
+    a:hover {
+      text-decoration: underline;
+    }
+    code {
+      background: #f6f8fa;
+      padding: 0.2em 0.4em;
+      border-radius: 3px;
+      font-family: ui-monospace, SFMono-Regular, "SF Mono", Consolas, monospace;
+    }
+  </style>
+</head>
+<body>
+  <h1>Stowkeeper Documentation</h1>
+
+  <p>
+    Welcome to the Stowkeeper documentation. Stowkeeper is an end-to-end
+    encrypted backup system with smart rotation, integrity verification, and
+    multi-channel notifications for Linux servers and workstations.
+  </p>
+
+  <h2>Getting started</h2>
+  <ul>
+    <li><a href="https://github.com/jorgealonsodev/stowkeeper/blob/main/README.md">README</a> — Project overview, quick start, and feature list</li>
+    <li><a href="deployment.html">Deployment Guide</a> — How to deploy Stowkeeper to a single host or an entire fleet</li>
+    <li><a href="architecture.html">Architecture</a> — System design, component overview, and design decisions</li>
+    <li><a href="operations.html">Operations Runbook</a> — Day-to-day operations, restore procedures, and troubleshooting</li>
+  </ul>
+
+  <h2>Reference</h2>
+  <ul>
+    <li><a href="https://github.com/jorgealonsodev/stowkeeper/blob/main/roles/backup_client/README.md">Ansible Role</a> — Role variables and usage</li>
+    <li><a href="https://github.com/jorgealonsodev/stowkeeper/blob/main/inventory/README.md">Inventory Guide</a> — Host grouping and variable precedence</li>
+    <li><a href="https://github.com/jorgealonsodev/stowkeeper/blob/main/monitoring/README.md">Metrics Reference</a> — Prometheus metrics and alert thresholds</li>
+  </ul>
+
+  <h2>Design</h2>
+  <ul>
+    <li><a href="https://github.com/jorgealonsodev/stowkeeper/blob/main/RDP-Stowkeeper.md">Project Decision Record (RDP)</a> — Original architectural decisions and rationale</li>
+    <li><a href="https://github.com/jorgealonsodev/stowkeeper/tree/main/openspec/specs">Specs</a> — 16 spec domains with Given/When/Then scenarios</li>
+    <li><a href="https://github.com/jorgealonsodev/stowkeeper/tree/main/openspec/changes/archive">Archived Changes</a> — Completed SDD phases</li>
+  </ul>
+
+  <h2>Contributing</h2>
+  <ul>
+    <li><a href="https://github.com/jorgealonsodev/stowkeeper/blob/main/CONTRIBUTING.md">Contributing Guide</a> — Workflow, code style, and PR process</li>
+  </ul>
+
+  <h2>Links</h2>
+  <ul>
+    <li><a href="https://restic.readthedocs.io/">Restic Documentation</a> — Backup engine</li>
+    <li><a href="https://www.backblaze.com/b2/">Backblaze B2</a> — Object storage</li>
+    <li><a href="https://developer.hashicorp.com/vault/docs/auth/approle">HashiCorp Vault</a> — AppRole authentication</li>
+  </ul>
+</body>
+</html>

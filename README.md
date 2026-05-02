@@ -4,7 +4,7 @@
 -->
 
 <p align="center">
-  <img src="stowkeeper-min.png" alt="Stowkeeper" width="200" />
+  <img src="stowkeeperv2-min.png" alt="Stowkeeper" width="200" />
 </p>
 
 <h1 align="center">Stowkeeper</h1>

@@ -1,1 +1,29 @@
-RDP-Stowkeeper.md
+# Runtime
+/var/
+*.log
+
+# Secrets (actual configs, not templates)
+/opt/stowkeeper/conf/pilot.conf
+pilot.conf
+maintenance.conf
+*passphrase*
+*.vault
+
+# Editor / OS
+.*.swp
+.*.swo
+*~
+.DS_Store
+Thumbs.db
+
+# Ansible
+*.retry
+ansible-vault-password-file
+
+# Tests
+bats-core/
+
+# OpenSpec (SDD working changes, not archives)
+openspec/changes/[0-9]*/
+!openspec/changes/archive/
+/openspec/tmp/

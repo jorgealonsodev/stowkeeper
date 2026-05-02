@@ -1,87 +1,87 @@
 # RDP — Project Stowkeeper
 
-**Sistema de Backup Cifrado con Rotación y Notificaciones**
+**Encrypted Backup System with Rotation and Notifications**
 
-**Documento:** Registro de Decisiones de Proyecto (RDP)
-**Versión:** 1.0
-**Fecha:** 2 de mayo de 2026
-**Estado:** Aprobado para implementación
-
----
-
-## 1. Resumen ejecutivo
-
-Diseño e implementación de un sistema de backup automatizado, cifrado de extremo a extremo, con rotación inteligente, verificación periódica de integridad y notificaciones multicanal (Telegram + email). El sistema cubre servidores Linux (físicos y virtuales) y workstations, con almacenamiento local (NAS) y replicación remota off-site.
-
-El objetivo es disponer de una solución reproducible mediante código (IaC), de bajo coste operativo, resistente a ransomware (gracias a repositorios append-only) y con observabilidad suficiente para detectar fallos antes de que se conviertan en pérdida de datos.
+**Document:** Project Decision Record (RDP)
+**Version:** 1.0
+**Date:** May 2, 2026
+**Status:** Approved for implementation
 
 ---
 
-## 2. Objetivos y alcance
+## 1. Executive summary
 
-### 2.1 Objetivos
+Design and implementation of an automated, end-to-end encrypted backup system with intelligent rotation, periodic integrity verification, and multi-channel notifications (Telegram + email). The system covers Linux servers (physical and virtual) and workstations, with local storage (NAS) and off-site remote replication.
 
-El sistema persigue tres objetivos primarios. Primero, **garantizar la recuperabilidad** de los datos críticos cumpliendo la regla 3-2-1 (tres copias, dos soportes distintos, una off-site). Segundo, **minimizar la ventana de exposición** ante pérdida de datos manteniendo un RPO máximo de 24 horas para datos generales y 1 hora para bases de datos. Tercero, **detectar proactivamente** cualquier degradación silenciosa del repositorio mediante verificaciones automáticas de integridad.
+The goal is to have a reproducible solution through code (IaC), with low operational cost, resistant to ransomware (thanks to append-only repositories), and with sufficient observability to detect failures before they become data loss.
 
-### 2.2 RPO y RTO objetivo
+---
 
-| Categoría de dato | RPO | RTO |
+## 2. Objectives and scope
+
+### 2.1 Objectives
+
+The system pursues three primary objectives. First, **guarantee recoverability** of critical data complying with the 3-2-1 rule (three copies, two different media, one off-site). Second, **minimize the exposure window** to data loss by maintaining a maximum RPO of 24 hours for general data and 1 hour for databases. Third, **proactively detect** any silent degradation of the repository through automatic integrity checks.
+
+### 2.2 Target RPO and RTO
+
+| Data category | RPO | RTO |
 |---|---|---|
-| Bases de datos transaccionales | 1 hora | 2 horas |
-| Sistemas de ficheros generales | 24 horas | 4 horas |
-| Configuraciones (`/etc`) | 24 horas | 1 hora |
-| Datos de usuario (workstations) | 24 horas | 8 horas |
+| Transactional databases | 1 hour | 2 hours |
+| General filesystems | 24 hours | 4 hours |
+| Configurations (`/etc`) | 24 hours | 1 hour |
+| User data (workstations) | 24 hours | 8 hours |
 
-### 2.3 Fuera de alcance
+### 2.3 Out of scope
 
-Quedan fuera del alcance de este proyecto los backups de aplicaciones SaaS de terceros (Microsoft 365, Google Workspace), que requieren herramientas específicas, así como la réplica síncrona de bases de datos en alta disponibilidad, que es un mecanismo complementario pero distinto al backup.
+Backups of third-party SaaS applications (Microsoft 365, Google Workspace), which require specific tools, as well as synchronous database replication in high availability, are out of scope for this project, as the latter is a complementary but distinct mechanism from backup.
 
 ---
 
-## 3. Decisiones de diseño
+## 3. Design decisions
 
-Esta sección documenta las decisiones técnicas tomadas, con su justificación y las alternativas descartadas.
+This section documents the technical decisions made, with their justification and the alternatives discarded.
 
-### 3.1 Motor de backup: **Restic**
+### 3.1 Backup engine: **Restic**
 
-Se elige **Restic** frente a BorgBackup por las siguientes razones:
+**Restic** is chosen over BorgBackup for the following reasons:
 
-- **Soporte nativo de múltiples backends**: S3, B2, Azure Blob, SFTP, REST y filesystem local sin necesidad de herramientas adicionales como `rclone`. BorgBackup requiere SSH o un servidor Borg dedicado, lo que limita la flexibilidad para almacenamiento off-site en object storage.
-- **Binario único en Go, sin dependencias**: simplifica el despliegue en clientes heterogéneos.
-- **Repositorio multi-cliente**: varios hosts pueden escribir en el mismo repositorio Restic con deduplicación cruzada, algo que Borg solo soporta de forma limitada y con riesgo de corrupción si hay concurrencia.
-- **Ecosistema activo y documentación madura**.
+- **Native support for multiple backends**: S3, B2, Azure Blob, SFTP, REST, and local filesystem without needing additional tools like `rclone`. BorgBackup requires SSH or a dedicated Borg server, which limits flexibility for off-site storage in object storage.
+- **Single binary in Go, no dependencies**: simplifies deployment on heterogeneous clients.
+- **Multi-client repository**: multiple hosts can write to the same Restic repository with cross-deduplication, something that Borg only supports in a limited way and with corruption risk if there is concurrency.
+- **Active ecosystem and mature documentation**.
 
-BorgBackup ofrece una compresión ligeramente superior y mejor rendimiento en redes de baja latencia, pero la flexibilidad de backends y la deduplicación multi-cliente de Restic pesan más en este proyecto.
+BorgBackup offers slightly superior compression and better performance on low-latency networks, but the backend flexibility and multi-client deduplication of Restic weigh more in this project.
 
-### 3.2 Topología de repositorios: **dos repositorios independientes**
+### 3.2 Repository topology: **two independent repositories**
 
-Se mantienen **dos repositorios completamente independientes**, no una réplica de uno a otro:
+**Two completely independent repositories** are maintained, not a replica of one to the other:
 
-1. **Repositorio primario**: NAS local accesible por SFTP/NFS en la LAN.
-2. **Repositorio secundario**: Backblaze B2 (object storage off-site).
+1. **Primary repository**: Local NAS accessible via SFTP/NFS on the LAN.
+2. **Secondary repository**: Backblaze B2 (off-site object storage).
 
-Cada cliente ejecuta dos backups, uno contra cada repositorio. Esta decisión es deliberada: si se replicase el repositorio primario al secundario (por ejemplo con `rclone sync`), una corrupción o cifrado por ransomware del primario se propagaría al secundario. Con dos repositorios independientes, cada uno es una línea de defensa autónoma.
+Each client runs two backups, one against each repository. This decision is deliberate: if the primary repository were replicated to the secondary (for example with `rclone sync`), corruption or ransomware encryption of the primary would propagate to the secondary. With two independent repositories, each one is an autonomous line of defense.
 
-El coste adicional (doble subida de datos) se compensa con la deduplicación de Restic, que en backups incrementales reduce el tráfico real a un porcentaje pequeño de los cambios.
+The additional cost (double upload of data) is compensated by Restic's deduplication, which in incremental backups reduces actual traffic to a small percentage of changes.
 
-### 3.3 Almacenamiento off-site: **Backblaze B2**
+### 3.3 Off-site storage: **Backblaze B2**
 
-Se elige **Backblaze B2** como destino off-site por su precio (≈6 USD/TB/mes en almacenamiento, sin coste de egreso hasta 3× lo almacenado al mes), su API compatible con S3 y su fiabilidad demostrada. AWS S3 y Azure Blob ofrecen funcionalidad similar pero a un coste 3-4 veces superior para este caso de uso. Wasabi sería una alternativa válida pero su política de retención mínima de 90 días penaliza la rotación frecuente.
+**Backblaze B2** is chosen as the off-site destination for its price (≈6 USD/TB/month in storage, with no egress cost up to 3× the stored amount per month), its S3-compatible API, and its proven reliability. AWS S3 and Azure Blob offer similar functionality but at 3-4 times the cost for this use case. Wasabi would be a valid alternative but its minimum retention policy of 90 days penalizes frequent rotation.
 
-### 3.4 Cifrado: **AES-256 nativo de Restic con passphrase derivada**
+### 3.4 Encryption: **AES-256 native to Restic with derived passphrase**
 
-El cifrado se delega íntegramente al motor de Restic, que aplica AES-256 en modo CTR con autenticación Poly1305 y deriva la clave de una passphrase mediante scrypt. **El cifrado ocurre en el cliente antes de cualquier transmisión**, lo que significa que el operador del NAS o de Backblaze nunca tiene acceso al contenido en claro.
+Encryption is entirely delegated to the Restic engine, which applies AES-256 in CTR mode with Poly1305 authentication and derives the key from a passphrase using scrypt. **Encryption occurs on the client before any transmission**, which means that the operator of the NAS or Backblaze never has access to the plaintext content.
 
-#### Gestión de passphrases
+#### Passphrase management
 
-- Cada repositorio tiene su propia passphrase de **al menos 40 caracteres aleatorios** generada con `openssl rand -base64 30`.
-- Las passphrases se almacenan en **HashiCorp Vault** (instancia self-hosted) y se inyectan en los clientes mediante AppRole con TTL corto.
-- Existe una **copia impresa en papel** de cada passphrase guardada en caja fuerte física, como último recurso ante pérdida total de Vault.
-- Restic permite múltiples claves por repositorio: se mantiene una clave operativa por host y una clave de emergencia ("master") guardada solo en papel.
+- Each repository has its own passphrase of **at least 40 random characters** generated with `openssl rand -base64 30`.
+- Passphrases are stored in **HashiCorp Vault** (self-hosted instance) and injected into clients via AppRole with short TTL.
+- There is a **printed paper copy** of each passphrase kept in a physical safe, as a last resort in case of total loss of Vault.
+- Restic allows multiple keys per repository: one operational key per host and one emergency ("master") key kept only on paper are maintained.
 
-### 3.5 Política de retención y rotación
+### 3.5 Retention and rotation policy
 
-Se aplica una política **GFS (Grandfather-Father-Son)** ligeramente adaptada, gestionada por `restic forget` con las siguientes flags:
+A **GFS (Grandfather-Father-Son)** policy, slightly adapted, is applied, managed by `restic forget` with the following flags:
 
 ```
 --keep-last 3
@@ -92,139 +92,139 @@ Se aplica una política **GFS (Grandfather-Father-Son)** ligeramente adaptada, g
 --keep-yearly 5
 ```
 
-Esto produce, en régimen estable, alrededor de 60-65 snapshots retenidos por host, lo que con la deduplicación de Restic supone típicamente entre 1.3× y 1.8× el tamaño de los datos en producción. La retención anual de 5 años cubre requisitos típicos de auditoría; si el contexto regulatorio (sanitario, financiero) exige más, se ajustará por host.
+This produces, in steady state, around 60-65 retained snapshots per host, which with Restic's deduplication typically amounts to between 1.3× and 1.8× the size of production data. The 5-year annual retention covers typical audit requirements; if the regulatory context (healthcare, financial) requires more, it will be adjusted per host.
 
-El comando `restic forget` se ejecuta con `--prune` solo una vez por semana (operación costosa), y los demás días solo marca snapshots sin liberar espacio.
+The `restic forget` command is run with `--prune` only once per week (expensive operation), and on other days it only marks snapshots without freeing space.
 
-### 3.6 Frecuencia de ejecución
+### 3.6 Execution frequency
 
-| Tipo de dato | Frecuencia | Mecanismo |
+| Data type | Frequency | Mechanism |
 |---|---|---|
-| Bases de datos (PostgreSQL, MySQL) | Cada hora | systemd timer + dump pre-backup |
-| `/etc` y configuraciones | Diaria a las 02:00 | systemd timer |
-| Volúmenes de datos generales | Diaria a las 03:00 | systemd timer |
-| Workstations | Al conectar a red corporativa, máx. 1×/día | systemd path unit |
-| Verificación `restic check` | Semanal (domingo 04:00) | systemd timer |
-| Verificación profunda (`--read-data`) | Mensual | systemd timer |
+| Databases (PostgreSQL, MySQL) | Every hour | systemd timer + pre-backup dump |
+| `/etc` and configurations | Daily at 02:00 | systemd timer |
+| General data volumes | Daily at 03:00 | systemd timer |
+| Workstations | When connecting to corporate network, max 1×/day | systemd path unit |
+| `restic check` verification | Weekly (Sunday 04:00) | systemd timer |
+| Deep verification (`--read-data`) | Monthly | systemd timer |
 
-Se eligen **systemd timers** sobre cron porque ofrecen mejor logging (journald), gestión de dependencias, ejecución diferida si el sistema estuvo apagado (`Persistent=true`) y aleatorización para evitar tormentas de I/O (`RandomizedDelaySec`).
+**systemd timers** are chosen over cron because they offer better logging (journald), dependency management, deferred execution if the system was off (`Persistent=true`), and randomization to avoid I/O storms (`RandomizedDelaySec`).
 
-### 3.7 Backup consistente de bases de datos
+### 3.7 Consistent database backup
 
-Las bases de datos no se respaldan copiando ficheros del datadir directamente. En su lugar:
+Databases are not backed up by copying files from the datadir directly. Instead:
 
-- **PostgreSQL**: `pg_dump` con formato custom (`-Fc`) por base de datos, más `pg_basebackup` semanal para una copia binaria completa con WAL.
-- **MySQL/MariaDB**: `mariabackup` (snapshot consistente sin bloquear) o `mysqldump --single-transaction` para bases pequeñas.
-- **SQLite**: `sqlite3 .backup` para garantizar consistencia.
+- **PostgreSQL**: `pg_dump` with custom format (`-Fc`) per database, plus weekly `pg_basebackup` for a complete binary copy with WAL.
+- **MySQL/MariaDB**: `mariabackup` (consistent snapshot without blocking) or `mysqldump --single-transaction` for small databases.
+- **SQLite**: `sqlite3 .backup` to guarantee consistency.
 
-Los dumps se escriben a un directorio temporal, Restic los respalda, y se borran después. Para volúmenes grandes (>100 GB), se considera el uso de **stdin a Restic** (`pg_dump | restic backup --stdin`) para evitar el doble almacenamiento.
+Dumps are written to a temporary directory, Restic backs them up, and they are deleted afterwards. For large volumes (>100 GB), the use of **stdin to Restic** (`pg_dump | restic backup --stdin`) is considered to avoid double storage.
 
-### 3.8 Verificación de integridad
+### 3.8 Integrity verification
 
-La verificación opera en tres niveles:
+Verification operates at three levels:
 
-1. **Diaria**: el propio `restic backup` valida los chunks subidos.
-2. **Semanal**: `restic check` (sin `--read-data`) verifica la estructura del repositorio y la consistencia de los índices. Es rápida.
-3. **Mensual**: `restic check --read-data-subset=10%` lee y verifica el 10% de los datos rotando el subconjunto cada mes, lo que cubre el 100% del repositorio en 10 meses sin sobrecargar la red.
+1. **Daily**: `restic backup` itself validates the uploaded chunks.
+2. **Weekly**: `restic check` (without `--read-data`) verifies the repository structure and index consistency. It is fast.
+3. **Monthly**: `restic check --read-data-subset=10%` reads and verifies 10% of the data, rotating the subset each month, which covers 100% of the repository in 10 months without overloading the network.
 
-Una vez al trimestre se ejecuta una **prueba de restauración real** automatizada: se restaura un snapshot a un directorio temporal, se compara un subconjunto de ficheros con `sha256sum` contra los originales, y se notifica el resultado. Un backup nunca verificado mediante restauración no es un backup.
+Once per quarter an **automated real restoration test** is executed: a snapshot is restored to a temporary directory, a subset of files is compared with `sha256sum` against the originals, and the result is notified. A backup never verified by restoration is not a backup.
 
-### 3.9 Notificaciones: **Telegram + email vía script wrapper**
+### 3.9 Notifications: **Telegram + email via wrapper script**
 
-Las notificaciones se gestionan con un **script wrapper en Bash** (`backup-runner.sh`) que envuelve cada ejecución de Restic, captura código de salida, duración, tamaño y stderr, y emite la notificación por los canales configurados.
+Notifications are managed with a **Bash wrapper script** (`backup-runner.sh`) that wraps each Restic execution, captures exit code, duration, size, and stderr, and emits the notification through the configured channels.
 
-#### Canales
+#### Channels
 
-- **Telegram (canal primario)**: usando un bot dedicado y un grupo privado de operaciones. Permite emojis, formato Markdown y respuesta rápida desde móvil.
-- **Email (canal secundario, fallback y archivo)**: vía `msmtp` con relay autenticado a un SMTP corporativo o a un servicio como Postmark/Amazon SES.
+- **Telegram (primary channel)**: using a dedicated bot and a private operations group. Allows emojis, Markdown formatting, and quick response from mobile.
+- **Email (secondary channel, fallback, and archive)**: via `msmtp` with authenticated relay to a corporate SMTP or to a service like Postmark/Amazon SES.
 
-#### Política de notificaciones
+#### Notification policy
 
-Para evitar **fatiga de alertas**:
+To avoid **alert fatigue**:
 
-- **Éxitos**: solo se notifica un resumen diario consolidado a las 08:00 (no cada job).
-- **Fallos**: notificación inmediata por Telegram **y** email.
-- **Avisos** (warnings, p. ej. backup que tardó >2× su mediana): notificación por Telegram solamente.
-- **Verificaciones fallidas**: alerta de máxima prioridad, con ping a operador on-call.
+- **Successes**: only a consolidated daily summary at 08:00 is notified (not every job).
+- **Failures**: immediate notification via Telegram **and** email.
+- **Warnings** (e.g., backup that took >2× its median): notification via Telegram only.
+- **Failed verifications**: highest priority alert, with ping to on-call operator.
 
-El script implementa **deduplicación de alertas** (no enviar la misma alerta más de una vez cada 4 horas) y **circuit breaker** (si fallan 5 jobs seguidos, escalar a llamada telefónica vía PagerDuty/OpsGenie).
+The script implements **alert deduplication** (do not send the same alert more than once every 4 hours) and **circuit breaker** (if 5 jobs fail in a row, escalate to phone call via PagerDuty/OpsGenie).
 
-### 3.10 Hardening contra ransomware
+### 3.10 Hardening against ransomware
 
-- **Append-only en Backblaze B2**: el cliente usa una Application Key con permisos `write` pero no `delete`. La rotación con `restic forget --prune` se ejecuta desde un host de gestión separado con credenciales distintas, que solo se activan durante la ventana de mantenimiento semanal.
-- **Object Lock** en B2 con retención de 30 días sobre el bucket: incluso credenciales comprometidas no pueden borrar objetos durante ese periodo.
-- **Repositorio NAS en sistema de ficheros con snapshots ZFS**: el NAS toma un snapshot ZFS read-only diario del repositorio Restic, retenido 30 días. Esto crea una capa adicional de protección incluso si las credenciales del cliente fuesen comprometidas.
+- **Append-only on Backblaze B2**: the client uses an Application Key with `write` permissions but not `delete`. Rotation with `restic forget --prune` is executed from a separate management host with different credentials, which are only activated during the weekly maintenance window.
+- **Object Lock** on B2 with 30-day retention on the bucket: even compromised credentials cannot delete objects during that period.
+- **NAS repository on ZFS filesystem with snapshots**: the NAS takes a daily read-only ZFS snapshot of the Restic repository, retained for 30 days. This creates an additional layer of protection even if client credentials were compromised.
 
-### 3.11 Despliegue y configuración
+### 3.11 Deployment and configuration
 
-La configuración del sistema se gestiona mediante **Ansible**:
+System configuration is managed via **Ansible**:
 
-- Un rol `backup_client` que instala Restic, despliega el wrapper, configura systemd timers, integra con Vault y registra el host.
-- Variables por host en `host_vars/` con la lista de paths a respaldar y excepciones.
-- El binario de Restic se distribuye desde un mirror interno con su checksum verificado, no se descarga de internet en cada ejecución.
-
----
-
-## 4. Arquitectura
-
-### 4.1 Diagrama lógico
-
-```
-                      ┌──────────────────────┐
-                      │   Vault (secrets)    │
-                      └──────────┬───────────┘
-                                 │ AppRole
-                                 │
-   ┌──────────┐  ┌──────────┐    │   ┌──────────┐
-   │ Server A │  │ Server B │    │   │  WS X    │
-   │ (Restic) │  │ (Restic) │ ◄──┘   │ (Restic) │
-   └────┬─────┘  └────┬─────┘        └────┬─────┘
-        │             │                    │
-        │ SFTP        │                    │ HTTPS
-        ▼             ▼                    ▼
-    ┌────────────────────┐         ┌──────────────────┐
-    │   NAS (ZFS)        │         │  Backblaze B2    │
-    │   Repo primario    │         │  Repo secundario │
-    │   + ZFS snapshots  │         │  + Object Lock   │
-    └────────────────────┘         └──────────────────┘
-
-        ┌───────────────────────────────────────────┐
-        │ backup-runner.sh → Telegram + email        │
-        └───────────────────────────────────────────┘
-```
-
-### 4.2 Componentes
-
-El **wrapper `backup-runner.sh`** es el único punto de entrada para cualquier ejecución de Restic. Centraliza autenticación con Vault, manejo de bloqueos (lockfile en `/var/lock/backup-runner.lock` para evitar solapamientos), captura de métricas, lógica de notificación y registro en journald con tags estructurados para facilitar consultas posteriores.
-
-El **host de mantenimiento** es una máquina dedicada (puede ser una VM pequeña) que ejecuta semanalmente las operaciones destructivas (`forget --prune`) y la verificación de integridad. Está aislado de los clientes y solo tiene credenciales con permisos elevados durante la ventana de mantenimiento.
+- A `backup_client` role that installs Restic, deploys the wrapper, configures systemd timers, integrates with Vault, and registers the host.
+- Per-host variables in `host_vars/` with the list of paths to back up and exceptions.
+- The Restic binary is distributed from an internal mirror with its checksum verified, not downloaded from the internet on each execution.
 
 ---
 
-## 5. Operaciones
+## 4. Architecture
 
-### 5.1 Procedimiento de restauración
+### 4.1 Logical diagram
 
-Documentado en runbook separado, pero a alto nivel:
+```
+                       ┌──────────────────────┐
+                       │   Vault (secrets)    │
+                       └──────────┬───────────┘
+                                  │ AppRole
+                                  │
+    ┌──────────┐  ┌──────────┐    │   ┌──────────┐
+    │ Server A │  │ Server B │    │   │  WS X    │
+    │ (Restic) │  │ (Restic) │ ◄──┘   │ (Restic) │
+    └────┬─────┘  └────┬─────┘        └────┬─────┘
+         │             │                    │
+         │ SFTP        │                    │ HTTPS
+         ▼             ▼                    ▼
+     ┌────────────────────┐         ┌──────────────────┐
+     │   NAS (ZFS)        │         │  Backblaze B2    │
+     │   Primary repo     │         │  Secondary repo  │
+     │   + ZFS snapshots  │         │  + Object Lock   │
+     └────────────────────┘         └──────────────────┘
 
-1. Identificar el snapshot deseado: `restic snapshots --host <hostname>`.
-2. Restaurar a directorio temporal: `restic restore <id> --target /tmp/restore`.
-3. Validar contenido antes de sobrescribir originales.
-4. Mover/copiar a destino final.
+         ┌───────────────────────────────────────────┐
+         │ backup-runner.sh → Telegram + email        │
+         └───────────────────────────────────────────┘
+```
 
-Se mantienen runbooks específicos para escenarios concretos (recuperación de base de datos, recuperación bare-metal, recuperación selectiva de ficheros).
+### 4.2 Components
 
-### 5.2 Pruebas trimestrales
+The **`backup-runner.sh` wrapper** is the single entry point for any Restic execution. It centralizes authentication with Vault, lock handling (lockfile at `/var/lock/backup-runner.lock` to avoid overlaps), metric capture, notification logic, and structured logging in journald with tags to facilitate subsequent queries.
 
-Cada trimestre, el equipo de operaciones realiza un ejercicio de DR donde:
+The **maintenance host** is a dedicated machine (can be a small VM) that weekly runs destructive operations (`forget --prune`) and integrity verification. It is isolated from clients and only has elevated-permission credentials during the maintenance window.
 
-- Se restaura un servidor completo a un entorno aislado a partir solo de los backups.
-- Se mide el RTO real obtenido y se compara con el objetivo.
-- Se documentan incidencias y se actualiza la documentación.
+---
 
-### 5.3 Métricas y observabilidad
+## 5. Operations
 
-El wrapper exporta métricas a un endpoint Prometheus (`textfile collector` de node_exporter):
+### 5.1 Restoration procedure
+
+Documented in separate runbook, but at a high level:
+
+1. Identify the desired snapshot: `restic snapshots --host <hostname>`.
+2. Restore to temporary directory: `restic restore <id> --target /tmp/restore`.
+3. Validate content before overwriting originals.
+4. Move/copy to final destination.
+
+Specific runbooks are maintained for concrete scenarios (database recovery, bare-metal recovery, selective file recovery).
+
+### 5.2 Quarterly tests
+
+Each quarter, the operations team performs a DR exercise where:
+
+- A complete server is restored to an isolated environment from backups only.
+- The actual RTO obtained is measured and compared against the target.
+- Incidents are documented and documentation is updated.
+
+### 5.3 Metrics and observability
+
+The wrapper exports metrics to a Prometheus endpoint (`textfile collector` of node_exporter):
 
 - `backup_last_success_timestamp{host, repo}`
 - `backup_duration_seconds{host, repo}`
@@ -232,61 +232,61 @@ El wrapper exporta métricas a un endpoint Prometheus (`textfile collector` de n
 - `backup_files_new{host, repo}`
 - `backup_check_last_success_timestamp{repo}`
 
-Sobre estas métricas se construyen alertas en Alertmanager: backup más viejo de 30 horas, verificación más vieja de 10 días, crecimiento anormal del repositorio (>50% en una semana).
+Alerts are built on these metrics in Alertmanager: backup older than 30 hours, verification older than 10 days, abnormal repository growth (>50% in one week).
 
 ---
 
-## 6. Coste estimado
+## 6. Estimated cost
 
-Para un volumen de referencia de **2 TB de datos en producción** con factor de deduplicación típico de 1.5×:
+For a reference volume of **2 TB of production data** with a typical deduplication factor of 1.5×:
 
-| Concepto | Coste mensual |
+| Item | Monthly cost |
 |---|---|
-| Backblaze B2 (3 TB almacenado) | ≈18 USD |
-| B2 egreso (suponiendo 1 restauración trimestral parcial) | ≈3 USD promedio |
-| NAS (amortización + electricidad) | ≈25 USD |
+| Backblaze B2 (3 TB stored) | ≈18 USD |
+| B2 egress (assuming 1 partial restoration per quarter) | ≈3 USD average |
+| NAS (amortization + electricity) | ≈25 USD |
 | Postmark/SES (email) | <1 USD |
 | Telegram | 0 USD |
-| **Total mensual estimado** | **≈47 USD** |
+| **Estimated total monthly** | **≈47 USD** |
 
-El coste de personal (operación, monitorización, pruebas trimestrales) es el componente dominante real y se estima en 4-6 horas/mes en régimen estable.
+The cost of personnel (operation, monitoring, quarterly tests) is the real dominant component and is estimated at 4-6 hours/month in steady state.
 
 ---
 
-## 7. Riesgos y mitigaciones
+## 7. Risks and mitigations
 
-| Riesgo | Impacto | Probabilidad | Mitigación |
+| Risk | Impact | Likelihood | Mitigation |
 |---|---|---|---|
-| Pérdida de passphrase | Crítico | Baja | Vault + copia en papel en caja fuerte |
-| Compromiso de cliente con escritura en repo | Alto | Media | Append-only key + Object Lock + ZFS snapshots |
-| Corrupción silenciosa del repo | Alto | Baja | `restic check --read-data` mensual rotativo |
-| Fallo del NAS | Medio | Media | Repositorio B2 independiente cubre el caso |
-| Backup nunca probado | Crítico | — | Restauraciones automáticas trimestrales |
-| Crecimiento descontrolado de coste B2 | Bajo | Media | Alertas Prometheus sobre tamaño de repo |
+| Loss of passphrase | Critical | Low | Vault + paper copy in safe |
+| Compromise of client with write access to repo | High | Medium | Append-only key + Object Lock + ZFS snapshots |
+| Silent repository corruption | High | Low | Monthly rotating `restic check --read-data` |
+| NAS failure | Medium | Medium | Independent B2 repository covers the case |
+| Backup never tested | Critical | — | Automated quarterly restorations |
+| Uncontrolled B2 cost growth | Low | Medium | Prometheus alerts on repository size |
 
 ---
 
-## 8. Plan de implementación
+## 8. Implementation plan
 
-La implementación se estructura en cuatro fases incrementales. La **fase 1** (semanas 1-2) consiste en el despliegue del repositorio primario en NAS, la configuración del wrapper y los timers en un host piloto, y la validación del flujo completo de notificaciones. La **fase 2** (semanas 3-4) añade el repositorio secundario en B2, la integración con Vault y el endurecimiento append-only. La **fase 3** (semanas 5-6) extiende el rol Ansible al resto de servidores y workstations. La **fase 4** (semana 7-8) implementa las verificaciones automáticas, las pruebas de restauración y las alertas Prometheus, cerrando el ciclo de observabilidad.
+Implementation is structured in four incremental phases. **Phase 1** (weeks 1-2) consists of deploying the primary repository on NAS, configuring the wrapper and timers on a pilot host, and validating the complete notification flow. **Phase 2** (weeks 3-4) adds the secondary repository in B2, integration with Vault, and append-only hardening. **Phase 3** (weeks 5-6) extends the Ansible role to the rest of servers and workstations. **Phase 4** (weeks 7-8) implements automatic verifications, restoration tests, and Prometheus alerts, closing the observability loop.
 
-Cada fase termina con un punto de control explícito: la fase no se da por cerrada hasta que las pruebas correspondientes pasan en el entorno real.
-
----
-
-## 9. Decisiones pendientes
-
-Quedan abiertas para revisión en una próxima iteración: (a) la inclusión de una tercera copia en almacenamiento físico desconectado (cinta LTO o disco rotativo) para datos sometidos a retención legal de más de 5 años; (b) la migración eventual del wrapper Bash a un binario Go más robusto si la complejidad crece; (c) la evaluación de `resticprofile` como capa de configuración declarativa sobre Restic.
+Each phase ends with an explicit checkpoint: the phase is not considered closed until the corresponding tests pass in the real environment.
 
 ---
 
-## 10. Referencias
+## 9. Pending decisions
 
-- Documentación oficial de Restic: <https://restic.readthedocs.io>
+The following remain open for review in a next iteration: (a) the inclusion of a third copy on disconnected physical storage (LTO tape or rotational disk) for data subject to legal retention of more than 5 years; (b) the eventual migration of the Bash wrapper to a more robust Go binary if complexity grows; (c) the evaluation of `resticprofile` as a declarative configuration layer over Restic.
+
+---
+
+## 10. References
+
+- Official Restic documentation: <https://restic.readthedocs.io>
 - Backblaze B2 Object Lock: <https://www.backblaze.com/b2/docs/file_lock.html>
 - HashiCorp Vault AppRole: <https://developer.hashicorp.com/vault/docs/auth/approle>
-- Regla 3-2-1 de backup: práctica estándar de la industria, originalmente formulada por Peter Krogh.
+- 3-2-1 backup rule: standard industry practice, originally formulated by Peter Krogh.
 
 ---
 
-*Fin del documento.*
+*End of document.*

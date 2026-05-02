@@ -6,7 +6,7 @@ multi-channel notifications for Linux servers and workstations.
 
 ## Getting started
 
-- [README](../README.md) — Project overview, quick start, and feature list
+- [README](https://github.com/jorgealonsodev/stowkeeper/blob/main/README.md) — Project overview, quick start, and feature list
 - [Deployment Guide](deployment.md) — How to deploy Stowkeeper to a single
   host or an entire fleet
 - [Architecture](architecture.md) — System design, component overview, and
@@ -16,22 +16,22 @@ multi-channel notifications for Linux servers and workstations.
 
 ## Reference
 
-- [Ansible Role](../roles/backup_client/README.md) — Role variables and usage
-- [Inventory Guide](../inventory/README.md) — Host grouping and variable
+- [Ansible Role](https://github.com/jorgealonsodev/stowkeeper/blob/main/roles/backup_client/README.md) — Role variables and usage
+- [Inventory Guide](https://github.com/jorgealonsodev/stowkeeper/blob/main/inventory/README.md) — Host grouping and variable
   precedence
-- [Metrics Reference](../monitoring/README.md) — Prometheus metrics and alert
+- [Metrics Reference](https://github.com/jorgealonsodev/stowkeeper/blob/main/monitoring/README.md) — Prometheus metrics and alert
   thresholds
 
 ## Design
 
-- [Project Decision Record (RDP)](../RDP-Stowkeeper.md) — Original
+- [Project Decision Record (RDP)](https://github.com/jorgealonsodev/stowkeeper/blob/main/RDP-Stowkeeper.md) — Original
   architectural decisions and rationale
-- [Specs](../openspec/specs/) — 16 spec domains with Given/When/Then scenarios
-- [Archived Changes](../openspec/changes/archive/) — Completed SDD phases
+- [Specs](https://github.com/jorgealonsodev/stowkeeper/tree/main/openspec/specs/) — 16 spec domains with Given/When/Then scenarios
+- [Archived Changes](https://github.com/jorgealonsodev/stowkeeper/tree/main/openspec/changes/archive/) — Completed SDD phases
 
 ## Contributing
 
-- [Contributing Guide](../CONTRIBUTING.md) — Workflow, code style, and PR
+- [Contributing Guide](https://github.com/jorgealonsodev/stowkeeper/blob/main/CONTRIBUTING.md) — Workflow, code style, and PR
   process
 
 ## Links

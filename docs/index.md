@@ -1,13 +1,12 @@
 ---
+layout: default
+title: Stowkeeper Documentation
 ---
 
 # Stowkeeper Documentation
 
 <p align="center">
-  <picture>
-    <source srcset="stowkeeperv2-dark.png" media="(prefers-color-scheme: dark)">
-    <img src="stowkeeperv2-min.png" alt="Stowkeeper" width="200">
-  </picture>
+  <img src="stowkeeperv2-min.png" alt="Stowkeeper" width="200">
 </p>
 
 Welcome to the Stowkeeper documentation. Stowkeeper is an end-to-end

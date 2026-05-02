@@ -1,4 +1,6 @@
 ---
+layout: default
+title: Operations Runbook
 ---
 
 # Stowkeeper Operations Runbook

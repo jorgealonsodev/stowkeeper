@@ -1,0 +1,83 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="utf-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1">
+  <title>{{ page.title | default: site.title }}</title>
+  <link rel="stylesheet" href="{{ '/assets/css/style.css' | relative_url }}">
+  <style>
+    .page-wrapper {
+      display: flex;
+      max-width: 1200px;
+      margin: 0 auto;
+    }
+    .sidebar {
+      width: 220px;
+      min-width: 220px;
+      padding: 20px 16px;
+      border-right: 1px solid #d0d7de;
+      position: sticky;
+      top: 0;
+      height: 100vh;
+      overflow-y: auto;
+      font-size: 14px;
+    }
+    .sidebar ul {
+      list-style: none;
+      padding: 0;
+      margin: 0;
+    }
+    .sidebar li {
+      margin-bottom: 8px;
+    }
+    .sidebar a {
+      text-decoration: none;
+    }
+    .sidebar a:hover {
+      text-decoration: underline;
+    }
+    .main-content {
+      flex: 1;
+      padding: 20px 32px;
+      min-width: 0;
+    }
+    @media (prefers-color-scheme: dark) {
+      .sidebar {
+        border-right-color: #30363d;
+        background-color: #161b22;
+      }
+    }
+    @media (max-width: 768px) {
+      .page-wrapper {
+        flex-direction: column;
+      }
+      .sidebar {
+        width: 100%;
+        min-width: 100%;
+        height: auto;
+        border-right: none;
+        border-bottom: 1px solid #d0d7de;
+        position: static;
+      }
+    }
+  </style>
+</head>
+<body>
+  <div class="page-wrapper">
+    <aside class="sidebar">
+      <nav>
+        <ul>
+          <li><a href="{{ '/' | relative_url }}">Home</a></li>
+          <li><a href="{{ '/deployment' | relative_url }}">Deployment Guide</a></li>
+          <li><a href="{{ '/architecture' | relative_url }}">Architecture</a></li>
+          <li><a href="{{ '/operations' | relative_url }}">Operations Runbook</a></li>
+          <li><a href="https://github.com/jorgealonsodev/stowkeeper">GitHub Repo</a></li>
+        </ul>
+      </nav>
+    </aside>
+    <main class="main-content">
+      {{ content }}
+    </main>
+  </div>
+</body>
+</html>

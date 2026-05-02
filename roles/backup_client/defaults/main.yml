@@ -1,0 +1,13 @@
+---
+# Sensible defaults, can be overridden
+stowkeeper_install_dir: /opt/stowkeeper
+stowkeeper_runtime_dir: /var/lib/stowkeeper
+stowkeeper_log_dir: /var/log/stowkeeper
+stowkeeper_repos:
+  - nas
+restic_version: "0.17.3"
+restic_mirror_url: "https://mirror.internal/restic"
+stowkeeper_notification_level: "full"
+stowkeeper_db_type: ""
+restic_checksum: ""
+state: present

@@ -1,0 +1,12 @@
+[servers]
+; srv-web-01 ansible_host=10.0.0.10
+
+[workstations]
+; ws-dev-01 ansible_host=10.0.1.10
+; ws-dev-02 ansible_host=10.0.1.11
+
+[db_hosts]
+; srv-db-01 ansible_host=10.0.0.20 stowkeeper_db_type=postgresql
+
+[all:vars]
+ansible_user=deploy

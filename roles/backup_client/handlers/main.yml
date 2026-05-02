@@ -1,0 +1,25 @@
+---
+- name: reload systemd
+  ansible.builtin.systemd:
+    daemon_reload: yes
+
+- name: enable timers
+  ansible.builtin.systemd:
+    name: "{{ item }}"
+    enabled: yes
+    state: started
+  loop:
+    - stowkeeper-backup-config.timer
+    - stowkeeper-backup-files.timer
+    - stowkeeper-check.timer
+    - stowkeeper-digest.timer
+  when: stowkeeper_state | default('present') == 'present'
+
+- name: enable db timer
+  ansible.builtin.systemd:
+    name: stowkeeper-backup-db.timer
+    enabled: yes
+    state: started
+  when:
+    - stowkeeper_state | default('present') == 'present'
+    - stowkeeper_db_type is defined and stowkeeper_db_type | length > 0

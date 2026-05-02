@@ -1,0 +1,11 @@
+[Unit]
+Description=Stowkeeper repository integrity check
+After=network.target
+
+[Service]
+Type=oneshot
+EnvironmentFile=-/opt/stowkeeper/conf/pilot.conf
+ExecStart=/opt/stowkeeper/backup-runner.sh check --with-prune
+StandardOutput=journal
+StandardError=journal
+SyslogIdentifier=stowkeeper-check

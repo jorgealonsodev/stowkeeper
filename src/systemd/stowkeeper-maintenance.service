@@ -1,0 +1,11 @@
+[Unit]
+Description=Stowkeeper B2 maintenance (forget --prune + check)
+After=network.target
+
+[Service]
+Type=oneshot
+EnvironmentFile=-/opt/stowkeeper/conf/maintenance.conf
+ExecStart=/opt/stowkeeper/backup-runner.sh maintenance --with-prune
+StandardOutput=journal
+StandardError=journal
+SyslogIdentifier=stowkeeper-maintenance

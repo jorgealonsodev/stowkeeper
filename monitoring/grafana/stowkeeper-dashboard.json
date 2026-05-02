@@ -1,0 +1,162 @@
+{
+  "dashboard": {
+    "id": null,
+    "uid": "stowkeeper-observability",
+    "title": "Stowkeeper Observability",
+    "tags": ["stowkeeper", "backup"],
+    "timezone": "utc",
+    "schemaVersion": 36,
+    "refresh": "30s",
+    "panels": [
+      {
+        "id": 1,
+        "title": "Last Backup Age",
+        "type": "stat",
+        "targets": [
+          {
+            "expr": "time() - stowkeeper_backup_last_success_timestamp",
+            "legendFormat": "{{ repo }}"
+          }
+        ],
+        "fieldConfig": {
+          "defaults": {
+            "unit": "s",
+            "thresholds": {
+              "steps": [
+                { "color": "green", "value": null },
+                { "color": "yellow", "value": 90000 },
+                { "color": "red", "value": 108000 }
+              ]
+            }
+          }
+        },
+        "gridPos": { "h": 8, "w": 12, "x": 0, "y": 0 }
+      },
+      {
+        "id": 2,
+        "title": "Repository Size",
+        "type": "timeseries",
+        "targets": [
+          {
+            "expr": "stowkeeper_repo_size_bytes",
+            "legendFormat": "{{ repo }}"
+          }
+        ],
+        "fieldConfig": {
+          "defaults": { "unit": "bytes" }
+        },
+        "gridPos": { "h": 8, "w": 12, "x": 12, "y": 0 }
+      },
+      {
+        "id": 3,
+        "title": "Last Check Age",
+        "type": "stat",
+        "targets": [
+          {
+            "expr": "time() - stowkeeper_check_last_success_timestamp",
+            "legendFormat": "{{ repo }}"
+          }
+        ],
+        "fieldConfig": {
+          "defaults": {
+            "unit": "s",
+            "thresholds": {
+              "steps": [
+                { "color": "green", "value": null },
+                { "color": "yellow", "value": 691200 },
+                { "color": "red", "value": 864000 }
+              ]
+            }
+          }
+        },
+        "gridPos": { "h": 8, "w": 12, "x": 0, "y": 8 }
+      },
+      {
+        "id": 4,
+        "title": "Last Deep Check",
+        "type": "stat",
+        "targets": [
+          {
+            "expr": "time() - stowkeeper_check_deep_success_timestamp",
+            "legendFormat": "{{ repo }}"
+          }
+        ],
+        "fieldConfig": {
+          "defaults": {
+            "unit": "s",
+            "thresholds": {
+              "steps": [
+                { "color": "green", "value": null },
+                { "color": "yellow", "value": 2592000 },
+                { "color": "red", "value": 3456000 }
+              ]
+            }
+          }
+        },
+        "gridPos": { "h": 8, "w": 12, "x": 12, "y": 8 }
+      },
+      {
+        "id": 5,
+        "title": "Restore Test Status",
+        "type": "stat",
+        "targets": [
+          {
+            "expr": "stowkeeper_restore_test_success",
+            "legendFormat": "{{ repo }}"
+          }
+        ],
+        "fieldConfig": {
+          "defaults": {
+            "unit": "none",
+            "min": 0,
+            "max": 1,
+            "thresholds": {
+              "steps": [
+                { "color": "red", "value": null },
+                { "color": "green", "value": 1 }
+              ]
+            }
+          }
+        },
+        "gridPos": { "h": 8, "w": 8, "x": 0, "y": 16 }
+      },
+      {
+        "id": 6,
+        "title": "Restore Test Files Checked",
+        "type": "stat",
+        "targets": [
+          {
+            "expr": "stowkeeper_restore_test_files_checked",
+            "legendFormat": "{{ repo }}"
+          }
+        ],
+        "gridPos": { "h": 8, "w": 8, "x": 8, "y": 16 }
+      },
+      {
+        "id": 7,
+        "title": "Restore Test Files Matched",
+        "type": "stat",
+        "targets": [
+          {
+            "expr": "stowkeeper_restore_test_files_matched",
+            "legendFormat": "{{ repo }}"
+          }
+        ],
+        "gridPos": { "h": 8, "w": 8, "x": 16, "y": 16 }
+      },
+      {
+        "id": 8,
+        "title": "Alert State",
+        "type": "table",
+        "targets": [
+          {
+            "expr": "ALERTS{alertstate=\"firing\"}",
+            "format": "table"
+          }
+        ],
+        "gridPos": { "h": 8, "w": 24, "x": 0, "y": 24 }
+      }
+    ]
+  },
+  "overwrite": false
+}

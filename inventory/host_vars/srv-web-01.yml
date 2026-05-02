@@ -1,0 +1,10 @@
+---
+stowkeeper_backup_paths:
+  - /etc
+  - /var/www
+  - /home
+stowkeeper_exclude_patterns:
+  - "*.log"
+  - "*.tmp"
+  - ".cache/"
+stowkeeper_db_type: ""

@@ -1,0 +1,11 @@
+[Unit]
+Description=Stowkeeper daily digest notification
+After=network.target
+
+[Service]
+Type=oneshot
+EnvironmentFile=-/opt/stowkeeper/conf/pilot.conf
+ExecStart=/opt/stowkeeper/backup-runner.sh digest
+StandardOutput=journal
+StandardError=journal
+SyslogIdentifier=stowkeeper-digest

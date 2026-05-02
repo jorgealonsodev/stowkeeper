@@ -1,0 +1,34 @@
+---
+- name: Stop and disable all timers
+  ansible.builtin.systemd:
+    name: "{{ item }}"
+    enabled: no
+    state: stopped
+  loop:
+    - stowkeeper-backup-config.timer
+    - stowkeeper-backup-files.timer
+    - stowkeeper-backup-db.timer
+    - stowkeeper-check.timer
+    - stowkeeper-digest.timer
+  ignore_errors: yes
+
+- name: Remove Stowkeeper directories
+  ansible.builtin.file:
+    path: "{{ stowkeeper_install_dir }}"
+    state: absent
+
+- name: Remove systemd units
+  ansible.builtin.file:
+    path: "{{ systemd_dir }}/{{ item }}"
+    state: absent
+  loop:
+    - stowkeeper-backup-config.service
+    - stowkeeper-backup-config.timer
+    - stowkeeper-backup-files.service
+    - stowkeeper-backup-files.timer
+    - stowkeeper-backup-db.service
+    - stowkeeper-backup-db.timer
+    - stowkeeper-check.service
+    - stowkeeper-check.timer
+    - stowkeeper-digest.service
+    - stowkeeper-digest.timer

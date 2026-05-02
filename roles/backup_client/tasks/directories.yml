@@ -1,0 +1,14 @@
+---
+- name: Create Stowkeeper directories
+  ansible.builtin.file:
+    path: "{{ item }}"
+    state: directory
+    owner: root
+    group: root
+    mode: "0755"
+  loop:
+    - "{{ stowkeeper_install_dir }}/bin"
+    - "{{ stowkeeper_install_dir }}/conf"
+    - "{{ stowkeeper_install_dir }}/lib"
+    - "{{ stowkeeper_runtime_dir }}"
+    - "{{ stowkeeper_log_dir }}"

@@ -1,0 +1,9 @@
+---
+# Internal vars (higher priority than defaults)
+restic_binary: "{{ stowkeeper_install_dir }}/bin/restic"
+wrapper_binary: "{{ stowkeeper_install_dir }}/bin/backup-runner.sh"
+systemd_dir: /etc/systemd/system
+required_packages:
+  - msmtp
+  - curl
+  - bzip2

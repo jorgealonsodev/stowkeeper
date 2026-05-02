@@ -1,0 +1,56 @@
+---
+- name: Verify Restic binary exists
+  ansible.builtin.stat:
+    path: "{{ restic_binary }}"
+  register: restic_stat
+
+- name: Fail if Restic binary missing
+  ansible.builtin.fail:
+    msg: "Restic binary not found at {{ restic_binary }}"
+  when: not restic_stat.stat.exists
+
+- name: Verify wrapper script is executable
+  ansible.builtin.stat:
+    path: "{{ wrapper_binary }}"
+  register: wrapper_stat
+
+- name: Check restic version
+  ansible.builtin.command: "{{ restic_binary }} version"
+  register: restic_version_output
+  ignore_errors: true
+  changed_when: false
+
+- name: Check systemd timer status
+  ansible.builtin.command: "systemctl is-active stowkeeper-backup-config.timer"
+  register: timer_status
+  ignore_errors: true
+  changed_when: false
+
+- name: Validate pilot.conf syntax
+  ansible.builtin.command: "bash -n {{ stowkeeper_install_dir }}/conf/pilot.conf"
+  register: pilot_conf_syntax
+  ignore_errors: true
+  changed_when: false
+
+- name: Check lock directory is writable
+  ansible.builtin.file:
+    path: "{{ stowkeeper_runtime_dir }}/.stowkeeper_write_test"
+    state: touch
+  changed_when: false
+
+- name: Remove lock directory write test file
+  ansible.builtin.file:
+    path: "{{ stowkeeper_runtime_dir }}/.stowkeeper_write_test"
+    state: absent
+
+- name: Report deployment summary
+  ansible.builtin.debug:
+    msg:
+      - "Stowkeeper deployed to {{ ansible_hostname }}"
+      - "Backup paths: {{ stowkeeper_backup_paths | join(', ') }}"
+      - "Repos: {{ stowkeeper_repos | join(', ') }}"
+      - "DB type: {{ stowkeeper_db_type | default('none') }}"
+      - "Restic version: {{ restic_version_output.stdout | default('N/A (repo not initialized or binary missing)') }}"
+      - "Config timer active: {{ timer_status.stdout | default('N/A') }}"
+      - "pilot.conf syntax: {{ 'OK' if pilot_conf_syntax.rc | default(0) == 0 else 'FAIL' }}"
+      - "Lock directory writable: OK"

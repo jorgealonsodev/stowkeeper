@@ -1,0 +1,15 @@
+---
+- name: Deploy pilot.conf (host configuration)
+  ansible.builtin.template:
+    src: pilot.conf.j2
+    dest: "{{ stowkeeper_install_dir }}/conf/pilot.conf"
+    mode: "0600"
+  no_log: true
+  notify: enable timers
+
+- name: Deploy backup-paths configuration
+  ansible.builtin.template:
+    src: backup-paths.conf.j2
+    dest: "{{ stowkeeper_install_dir }}/conf/backup-paths.conf"
+    mode: "0644"
+  notify: enable timers

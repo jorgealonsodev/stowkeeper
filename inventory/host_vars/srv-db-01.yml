@@ -1,0 +1,8 @@
+---
+stowkeeper_backup_paths:
+  - /etc
+  - /var/lib/postgresql
+  - /home
+stowkeeper_db_type: postgresql
+stowkeeper_db_name: myapp
+stowkeeper_db_user: postgres

@@ -1,0 +1,10 @@
+[Unit]
+Description=Stowkeeper weekly integrity check timer
+
+[Timer]
+OnCalendar=Sun *-*-* 04:00:00
+Persistent=true
+Unit=stowkeeper-check.service
+
+[Install]
+WantedBy=timers.target

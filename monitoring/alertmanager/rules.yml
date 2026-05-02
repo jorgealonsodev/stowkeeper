@@ -1,0 +1,44 @@
+groups:
+  - name: stowkeeper
+    interval: 60s
+    rules:
+      - alert: StaleBackup
+        expr: time() - stowkeeper_backup_last_success_timestamp > 108000
+        for: 5m
+        labels:
+          severity: warning
+          stowkeeper_channel: telegram
+        annotations:
+          summary: "Stowkeeper backup stale for {{ $labels.repo }}"
+          description: "No successful backup for {{ $labels.repo }} in over 30 hours (last success {{ $value | humanizeDuration }} ago)."
+
+      - alert: StaleCheck
+        expr: time() - stowkeeper_check_last_success_timestamp > 864000
+        for: 5m
+        labels:
+          severity: warning
+          stowkeeper_channel: telegram
+        annotations:
+          summary: "Stowkeeper check stale for {{ $labels.repo }}"
+          description: "No successful repository check for {{ $labels.repo }} in over 10 days (last success {{ $value | humanizeDuration }} ago)."
+
+      - alert: GrowthAnomaly
+        expr: |
+          (
+            stowkeeper_repo_size_bytes > 0
+            and
+            stowkeeper_repo_size_bytes offset 7d > 0
+            and
+            (
+              (stowkeeper_repo_size_bytes - stowkeeper_repo_size_bytes offset 7d)
+              /
+              stowkeeper_repo_size_bytes offset 7d
+            ) > 0.5
+          )
+        for: 15m
+        labels:
+          severity: critical
+          stowkeeper_channel: "telegram,email"
+        annotations:
+          summary: "Stowkeeper repository growth anomaly on {{ $labels.repo }}"
+          description: "Repository {{ $labels.repo }} grew by more than 50% in the last 7 days (current {{ $value | humanize1024 }}B, previous {{ with query \"stowkeeper_repo_size_bytes offset 7d\" }}{{ . | first | value | humanize1024 }}B{{ end }})."

@@ -1,0 +1,11 @@
+[Unit]
+Description=Stowkeeper file system backup
+After=network.target
+
+[Service]
+Type=oneshot
+EnvironmentFile=-/opt/stowkeeper/conf/pilot.conf
+ExecStart=/opt/stowkeeper/backup-runner.sh backup --job files
+StandardOutput=journal
+StandardError=journal
+SyslogIdentifier=stowkeeper-backup-files

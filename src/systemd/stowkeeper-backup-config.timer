@@ -1,0 +1,10 @@
+[Unit]
+Description=Stowkeeper configuration backup timer
+
+[Timer]
+OnCalendar=*-*-* 02:00:00
+Persistent=true
+Unit=stowkeeper-backup-config.service
+
+[Install]
+WantedBy=timers.target

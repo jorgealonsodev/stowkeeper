@@ -1,0 +1,38 @@
+---
+- name: Assert required variables are defined
+  ansible.builtin.assert:
+    that:
+      - stowkeeper_backup_paths is defined
+      - stowkeeper_backup_paths | length > 0
+      - stowkeeper_repos is defined
+      - stowkeeper_repos | length > 0
+      - restic_version is defined
+      - restic_version | length > 0
+      - restic_checksum is defined
+      - restic_checksum | length > 0
+      - restic_mirror_url is defined
+      - restic_mirror_url is match('^https://')
+    fail_msg: "Critical variables must be defined and valid. See validate.yml for details."
+
+- name: Assert NAS repo variables are defined when NAS is used
+  ansible.builtin.assert:
+    that:
+      - stowkeeper_nas_host is defined
+      - stowkeeper_nas_user is defined
+      - stowkeeper_nas_path is defined
+    fail_msg: "NAS repository selected but stowkeeper_nas_host, stowkeeper_nas_user, or stowkeeper_nas_path is missing"
+  when: "'nas' in stowkeeper_repos"
+
+- name: Assert B2 repo variables are defined when B2 is used
+  ansible.builtin.assert:
+    that:
+      - stowkeeper_b2_bucket_url is defined
+    fail_msg: "B2 repository selected but stowkeeper_b2_bucket_url is missing"
+  when: "'b2' in stowkeeper_repos"
+
+- name: Assert DB variables are defined when DB backups are configured
+  ansible.builtin.assert:
+    that:
+      - stowkeeper_db_name is defined
+    fail_msg: "Database backup configured but stowkeeper_db_name is missing"
+  when: stowkeeper_db_type is defined and stowkeeper_db_type | length > 0

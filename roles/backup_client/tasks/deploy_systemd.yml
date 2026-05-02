@@ -1,0 +1,52 @@
+---
+- name: Deploy systemd units
+  ansible.builtin.copy:
+    src: "{{ playbook_dir }}/../src/systemd/{{ item }}"
+    dest: "{{ systemd_dir }}/{{ item }}"
+    mode: "0644"
+  loop:
+    - stowkeeper-backup-config.service
+    - stowkeeper-backup-config.timer
+    - stowkeeper-backup-files.service
+    - stowkeeper-backup-files.timer
+    - stowkeeper-check.service
+    - stowkeeper-check.timer
+    - stowkeeper-digest.service
+    - stowkeeper-digest.timer
+  notify: reload systemd
+
+- name: Deploy DB backup units (conditional)
+  ansible.builtin.copy:
+    src: "{{ playbook_dir }}/../src/systemd/{{ item }}"
+    dest: "{{ systemd_dir }}/{{ item }}"
+    mode: "0644"
+  loop:
+    - stowkeeper-backup-db.service
+    - stowkeeper-backup-db.timer
+  when: stowkeeper_db_type is defined and stowkeeper_db_type | length > 0
+  notify:
+    - reload systemd
+    - enable db timer
+
+- name: Enable and start timers
+  ansible.builtin.systemd:
+    name: "{{ item }}"
+    enabled: yes
+    state: started
+    daemon_reload: yes
+  loop:
+    - stowkeeper-backup-config.timer
+    - stowkeeper-backup-files.timer
+    - stowkeeper-check.timer
+    - stowkeeper-digest.timer
+  when: stowkeeper_state | default('present') == 'present'
+
+- name: Enable and start DB timer
+  ansible.builtin.systemd:
+    name: stowkeeper-backup-db.timer
+    enabled: yes
+    state: started
+    daemon_reload: yes
+  when:
+    - stowkeeper_state | default('present') == 'present'
+    - stowkeeper_db_type is defined and stowkeeper_db_type | length > 0

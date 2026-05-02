@@ -1,0 +1,11 @@
+[Unit]
+Description=Stowkeeper file system backup timer
+
+[Timer]
+OnCalendar=*-*-* 03:00:00
+RandomizedDelaySec=1800
+Persistent=true
+Unit=stowkeeper-backup-files.service
+
+[Install]
+WantedBy=timers.target

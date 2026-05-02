@@ -1,0 +1,12 @@
+---
+- name: Deploy backup-runner wrapper
+  ansible.builtin.copy:
+    src: "{{ playbook_dir }}/../src/backup-runner.sh"
+    dest: "{{ wrapper_binary }}"
+    mode: "0755"
+
+- name: Deploy library scripts
+  ansible.builtin.copy:
+    src: "{{ playbook_dir }}/../src/lib/"
+    dest: "{{ stowkeeper_install_dir }}/lib/"
+    mode: "0644"

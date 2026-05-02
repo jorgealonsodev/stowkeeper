@@ -1,0 +1,8 @@
+---
+stowkeeper_repos:
+  - nas
+stowkeeper_telegram_bot_token: "{{ vault_telegram_bot_token }}"
+stowkeeper_telegram_chat_id: "{{ vault_telegram_chat_id }}"
+stowkeeper_smtp_host: "{{ vault_smtp_host }}"
+stowkeeper_smtp_from: "stowkeeper@example.com"
+restic_checksum: "{{ vault_restic_checksum }}"

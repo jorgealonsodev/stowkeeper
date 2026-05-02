@@ -1,0 +1,29 @@
+---
+- name: Validate required variables
+  ansible.builtin.include_tasks: validate.yml
+
+- name: Install system dependencies
+  ansible.builtin.include_tasks: install_deps.yml
+
+- name: Create directory structure
+  ansible.builtin.include_tasks: directories.yml
+
+- name: Install Restic binary
+  ansible.builtin.include_tasks: install_restic.yml
+  when: stowkeeper_state | default('present') == 'present'
+
+- name: Deploy wrapper scripts
+  ansible.builtin.include_tasks: deploy_scripts.yml
+
+- name: Deploy configuration files
+  ansible.builtin.include_tasks: deploy_configs.yml
+
+- name: Deploy systemd units
+  ansible.builtin.include_tasks: deploy_systemd.yml
+
+- name: Verify deployment
+  ansible.builtin.include_tasks: verify.yml
+
+- name: Remove Stowkeeper (absent state)
+  ansible.builtin.include_tasks: absent.yml
+  when: stowkeeper_state | default('present') == 'absent'

@@ -1,0 +1,5 @@
+---
+stowkeeper_repos:
+  - nas
+  - b2
+stowkeeper_notification_level: full

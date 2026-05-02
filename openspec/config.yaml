@@ -1,0 +1,57 @@
+# openspec/config.yaml
+schema: spec-driven
+
+context: |
+  Tech stack: Bash (backup-runner.sh wrapper), Ansible (config management), Restic (backup engine),
+    systemd timers/path units, Telegram Bot API + msmtp for notifications,
+    HashiCorp Vault (AppRole) for secrets, Prometheus textfile collector (node_exporter) for monitoring,
+    SFTP (NAS) + Backblaze B2 (S3) for storage. Future Go migration considered.
+  Architecture: Multi-repository backup system with two independent repos (NAS primary + B2 off-site).
+    Single wrapper script (backup-runner.sh) centralizes auth, logging, metrics, notifications.
+    systemd timers orchestrate execution. GFS retention policy. Append-only hardening + ZFS snapshots.
+    No code yet — only planning document (RDP-Stowkeeper.md).
+  Testing: No test infrastructure detected. Bash project with no formal test framework.
+  Style: ShellCheck-compatible Bash (expected). Ansible YAML.
+
+strict_tdd: false
+
+testing:
+  strict_tdd: false
+  detected: "2026-05-02"
+  test_runner:
+    command: ""
+    framework: NOT FOUND
+  layers:
+    unit: { available: false, tool: "—" }
+    integration: { available: false, tool: "—" }
+    e2e: { available: false, tool: "—" }
+  coverage:
+    available: false
+    command: ""
+  quality:
+    linter: { available: false, command: "shellcheck (expected, not configured)" }
+    type_checker: { available: false, command: "—" }
+    formatter: { available: false, command: "—" }
+
+rules:
+  proposal:
+    - Include rollback plan for risky changes
+    - Identify affected modules (wrapper, Ansible roles, systemd units)
+  specs:
+    - Use Given/When/Then format for scenarios
+    - Use RFC 2119 keywords (MUST, SHALL, SHOULD, MAY)
+  design:
+    - Include sequence diagrams for complex flows (backup, restore, notification)
+    - Document architecture decisions with rationale
+  tasks:
+    - Group tasks by phase (infrastructure, implementation, testing)
+    - Use hierarchical numbering (1.1, 1.2, etc.)
+    - Keep tasks small enough to complete in one session
+  apply:
+    - Follow existing code patterns and conventions
+    - Load relevant coding skills for the project stack
+  verify:
+    - Run tests if test infrastructure exists
+    - Compare implementation against every spec scenario
+  archive:
+    - Warn before merging destructive deltas (large removals)

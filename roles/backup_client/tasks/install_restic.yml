@@ -1,0 +1,13 @@
+---
+- name: Fail if restic_checksum is empty
+  ansible.builtin.fail:
+    msg: "restic_checksum must be set to a non-empty SHA256 checksum. Add it to your vault or group_vars."
+  when: restic_checksum | length == 0
+
+- name: Download Restic binary from internal mirror
+  ansible.builtin.get_url:
+    url: "{{ restic_mirror_url }}/restic_{{ restic_version }}_linux_amd64"
+    dest: "{{ restic_binary }}"
+    mode: "0755"
+    checksum: "sha256:{{ restic_checksum }}"
+  no_log: false

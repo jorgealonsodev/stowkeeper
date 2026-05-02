@@ -1,0 +1,67 @@
+---
+---
+
+// Dark mode via prefers-color-scheme
+@media (prefers-color-scheme: dark) {
+  body {
+    background-color: #1a1b2e;
+    color: #c9d1d9;
+  }
+
+  a {
+    color: #7fb4c8;
+  }
+
+  a:visited {
+    color: #a78bfa;
+  }
+
+  a:hover {
+    color: #93c5fd;
+  }
+
+  h1, h2, h3, h4, h5, h6 {
+    color: #e6edf3;
+  }
+
+  code {
+    background-color: #2d2d3f;
+    color: #e6edf3;
+  }
+
+  pre {
+    background-color: #161b22;
+    border: 1px solid #30363d;
+  }
+
+  hr {
+    border-color: #30363d;
+  }
+
+  table {
+    border-color: #30363d;
+  }
+
+  th, td {
+    border-color: #30363d;
+  }
+
+  th {
+    background-color: #21262d;
+  }
+
+  blockquote {
+    border-left-color: #30363d;
+    color: #8b949e;
+  }
+
+  .site-header {
+    background-color: #161b22;
+    border-bottom-color: #30363d;
+  }
+
+  .site-footer {
+    background-color: #161b22;
+    border-top-color: #30363d;
+  }
+}

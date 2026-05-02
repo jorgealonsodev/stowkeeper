@@ -3,6 +3,13 @@
 
 # Stowkeeper Documentation
 
+<p align="center">
+  <picture>
+    <source srcset="stowkeeperv2-dark.png" media="(prefers-color-scheme: dark)">
+    <img src="stowkeeperv2-min.png" alt="Stowkeeper" width="200">
+  </picture>
+</p>
+
 Welcome to the Stowkeeper documentation. Stowkeeper is an end-to-end
 encrypted backup system with smart rotation, integrity verification, and
 multi-channel notifications for Linux servers and workstations.

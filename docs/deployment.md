@@ -1,3 +1,6 @@
+---
+---
+
 # Stowkeeper Deployment Guide
 
 This document provides step-by-step instructions for deploying Stowkeeper — an end-to-end encrypted backup pipeline with dual-repository support (local NAS and Backblaze B2) — to production Linux hosts.

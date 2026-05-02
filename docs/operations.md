@@ -1,3 +1,6 @@
+---
+---
+
 # Stowkeeper Operations Runbook
 
 This document is the on-call reference for the Stowkeeper backup system. It assumes familiarity with Restic, systemd, and basic Linux system administration. All paths reference the default installation at `/opt/stowkeeper`.

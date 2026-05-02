@@ -1,3 +1,6 @@
+---
+---
+
 # Stowkeeper Architecture
 
 This document describes the architecture of Stowkeeper, an end-to-end encrypted backup system for Linux servers and workstations. It is intended for new team members onboarding to the project.
